@@ -7,11 +7,17 @@ function [data,timepts,elapsed,stimdelay,si,stimvals,notes] = tdtepisodes6(fn,An
 rawEpiSuffix='-RawEpisodes';
 [p1,f1,e1]=fileparts(fn);
 if endsWith(fn,'tev')
+
     rawFile=[p1 '/' f1 rawEpiSuffix '.mat'];
     if isfile(rawFile)
-        fn=rawFile;
-        fprintf('Found episode file %s\n',[f1 rawEpiSuffix '.mat'])
+        
+        fprintf('Found episode file %s\n',[f1 rawEpiSuffix '.mat']);
+            if Answer.overwrite
+                fprintf('... but overwriting it\n');
+            else
+                fn=rawFile;
         e1='.mat';
+            end
     else
     fn=fileparts(p1);
     fn=p1;
@@ -20,13 +26,20 @@ end
 directmatlabread=false;   
 
     if strcmp( e1,'.mat')
+        load(fn);
+        if Answer.prestimtime>LFPstruct.stimdelay || Answer.poststimtime>LFPstruct.si*size(LFPstruct.data,3)-LFPstruct.stimdelay
+            fprintf('Reloading episodes from continuous wave data to capture -%.1f to %.1f ms\n',Answer.prestimtime*1000,Answer.poststimtime*1000);
+        else
+
         directmatlabread=true;
+        
         fnorig=fn;
         fn=p1;
+        end
     end
     if directmatlabread
         fprintf('Loading sweeps from matlab file %s\n',f1');
-   load(fnorig);
+   %load(fnorig);
    if isfield(LFPstruct,'data')
        data=LFPstruct.data;
    else
@@ -57,7 +70,10 @@ clear data;
         end
 
         timepts=(1:size(data,3))*si;
-else
+    else
+        if endsWith(fn,'tev') ||endsWith(fn,'mat')
+            fn=fileparts(fn);
+        end
 heads = TDTbin2mat(fn, 'HEADERS', 1);
 data=[];
 stimdelay=[];
@@ -119,8 +135,8 @@ swpnums=validatevector(swps1,swps);  % this takes the string that contains sweep
 
 for swp1=1:numel(swpnums) 
        swp=swpnums(swp1); %swps
-       thisswp=TDTbin2mat(fn,'STORE','Wave','T1',heads.stores.EpcV.onset(swp)-prestim/1000,'T2',heads.stores.EpcV.onset(swp)+poststim/1000);
-  
+       thisswp=TDTbin2mat(fn,'STORE','Wave','T1',heads.stores.EpcV.onset(swp)-(prestim-1)/1000,'T2',heads.stores.EpcV.onset(swp)+(poststim+1)/1000);
+       % need to correct the tdt stim times, as they are off by one ms.
        %    stimsample=epocs.epocs.EpcV.onset(swp)*fs;
     %   firstsample=int32(stimsample-prestim/1000*fs);
      %  lastsample=int32(stimsample+poststim/1000*fs);
@@ -250,6 +266,24 @@ end
         LFPstruct.notes=notes;
         fprintf('Saving Episodes as %s\n',rawFile);
         save(rawFile,'LFPstruct');
+    end
+    poststim1=LFPstruct.si*size(LFPstruct.data,3)-LFPstruct.stimdelay;
+    if stimdelay>Answer.prestimtime || poststim1 >Answer.poststimtime
+        firstpttime=stimdelay-Answer.prestimtime;
+        
+        lastpttime=Answer.prestimtime+Answer.poststimtime;
+        firstpt=int16(firstpttime /LFPstruct.si);
+
+        lastpt=int16((lastpttime+firstpttime) /LFPstruct.si);
+        if firstpt<1
+            firstpt=1;
+        end
+        if lastpt>size(data,3)
+            lastpt=size(data,3);
+        end
+        data=data(:,:,firstpt:lastpt);
+        timepts=(1:size(data,3))*si;
+        stimdelay=Answer.prestimtime;
     end
     fprintf('Stimuli used: ');
     fprintf('%d ',unique(stimvals));

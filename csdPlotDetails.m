@@ -53,7 +53,7 @@ defans.saving = AnswerIn.saving;
 formats(currentrow,currentcol).type='check';
 prompt(currentpos,:)={'Clear All Plots', 'clearplots',[]};
 defans.clearplots = AnswerIn.clearplots;
-
+if 0
 if ~isfield(AnswerIn,'createMat')
     AnswerIn.createMat=true;
 end
@@ -61,7 +61,7 @@ end
 formats(currentrow,currentcol).type='check';
 prompt(currentpos,:)={'Create raw MAT file', 'createMat',[]};
 defans.createMat = AnswerIn.createMat;
-
+end
 if ~isfield(AnswerIn,'switchsweep')
     AnswerIn.switchsweep='1:10,13,88:89';
 end

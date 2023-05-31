@@ -6,15 +6,18 @@ simplewidth=50;
 Options.ReadButton = 'off';
 Options.SaveButton = 'off';
 Options.ApplyButton = 'off';
-[currentrow,currentcol,currentpos]=calcdlgpos(currentpos,dlgcols);
-formats(currentrow,currentcol).type='check';
-prompt(currentpos,:)={'Average sweeps', 'averaging',[]};
-defans(1).averaging = AnswerIn.averaging;
 
+             if any(cell2num(AnswerIn.WindowTable(:,2))<.1)  % convert ms to seconds, if ms entered in table
+                        for t=1:size(AnswerIn.WindowTable,1)
+                            AnswerIn.WindowTable{t,2}=AnswerIn.WindowTable{t,2}*1000;
+                            AnswerIn.WindowTable{t,3}=AnswerIn.WindowTable{t,3}*1000;
+                        end
+                        
+                    end
 [currentrow,currentcol,currentpos]=calcdlgpos(currentpos,dlgcols);
 formats(currentrow,currentcol).type='check';
 prompt(currentpos,:)={'Offset Baseline', 'baselineoffset',[]};
-defans.baselineoffset = AnswerIn.baselineoffset;
+defans(1).baselineoffset = AnswerIn.baselineoffset;
 
 [currentrow,currentcol,currentpos]=calcdlgpos(currentpos,dlgcols);
 formats(currentrow,currentcol).type = 'edit';
@@ -32,11 +35,6 @@ if ~isfield(AnswerIn,'trendnormalizing')
 end
 defans.trendnormalizing = AnswerIn.trendnormalizing;
 
-
-[currentrow,currentcol,currentpos]=calcdlgpos(currentpos,dlgcols);
-formats(currentrow,currentcol).type='check';
-prompt(currentpos,:)={'Filter', 'filtering',[]};
-defans.filtering = AnswerIn.filtering;
 
 [currentrow,currentcol,currentpos]=calcdlgpos(currentpos,dlgcols);
 formats(currentrow,currentcol).type = 'edit';
@@ -115,10 +113,16 @@ defans.contourgain = AnswerIn.contourgain;
          
 
 [Answer,Cancelled] = inputsdlgjh(prompt,'TDT Scaling',formats,defans,Options);
-
+  for t=1:size(Answer.WindowTable,1)
+                            Answer.WindowTable{t,2}=Answer.WindowTable{t,2}/1000;
+                            Answer.WindowTable{t,3}=Answer.WindowTable{t,3}/1000;
+                        end
 if Cancelled
     AnswerOut=AnswerIn;
 else
+             
+         
+               
     AnswerOut=mergestructures(AnswerIn,Answer);
 end
 

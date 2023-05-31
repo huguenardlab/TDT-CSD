@@ -202,10 +202,20 @@ while notdone
             formats(currentrow,currentcol).size = 100;
             prompt(currentpos,:)={'Sweeps', 'swps',[]};
             defans.swps = Answer.swps;
+[currentrow,currentcol,currentpos]=calcdlgpos(currentpos,dlgcols);
+formats(currentrow,currentcol).type='check';
+prompt(currentpos,:)={'Average sweeps', 'averaging',[]};
+defans.averaging = Answer.averaging;
+
+[currentrow,currentcol,currentpos]=calcdlgpos(currentpos,dlgcols);
+formats(currentrow,currentcol).type='check';
+prompt(currentpos,:)={'Filter Sweeps', 'filtering',[]};
+defans.filtering = Answer.filtering;
 
             if analyzing
                 [Answernew,Cancelled] = inputsdlgjh(prompt,sprintf('TDT %s',startdir),formats,defans,Options);
                 Answer=mergestructures(Answer,Answernew);
+                
             else
                 Cancelled=1;
             end
@@ -220,10 +230,12 @@ while notdone
             end
             if ~Cancelled && strcmp(Answer.DisplayParams,'OutputDetails')
                 Answer=csdPlotDetails(Answer);
+                Answer.DisplayParams='None';
                 Cancelled=1;
             end
             if ~Cancelled && strcmp(Answer.DisplayParams,'PlotScaling')
                 Answer=csdScaling(Answer);
+                Answer.DisplayParams='None';
                 Cancelled=1;
             end
 
@@ -279,14 +291,16 @@ while notdone
                     Answer.stimid='EpcV';
                     Answer.mapping=mapping;
                     Answer.LogCSD=LogCSD;
+                    Answer.overwrite=false;
 
+       
 
                     [data,ts,elapsed,stimdelay,si,stimVals,notes]=tdtepisodes6(fn,Answer); % here to look at lfp data
                     Answer.notes=notes;
                     if isnan(stimVals(end))
                         data = data(1:(end -1),:,:);
                     end
-                    stimdelay=stimdelay+.001; % TDT generated stimuli are off by 1 ms
+                    stimdelay=stimdelay; % +.001; % TDT generated stimuli are off by 1 ms
                     % at least for the configuration we are using in Sept
                     % 2019. Rec16ChanLFPStimUnfilteredGabrielle
                     Answer.stimVals=stimVals;
@@ -669,7 +683,7 @@ while notdone
                                     autoscalept2=length(ts);
                                     as1=min(min(min(pltdata(chn,:,autoscalept1:autoscalept2))));
                                     as2=max(max(max(pltdata(chn,:,autoscalept1:autoscalept2))));
-                                    ylim([as1 as2]*1.1);
+                                    ylim([as1 as2]*1.2);
                                     xlim([stimdelay-.001 ts(end)]*1000);
                                     legend(lgnd);
                                     xlabel('Time (ms)');
